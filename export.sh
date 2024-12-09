@@ -14,13 +14,13 @@ dst=$(mktemp -d)
 trap 'rm -rf -- "$dst"' EXIT # clean up temp dir on premature exit
 
 function copy() {
-  results=$(find -iname "$1")
+  results=$(find -L -iname "$1")
   if [ -z "$results" ]; then
     echo "No $1"
   else
     n=$(echo "$results" | wc -l)
     echo "Copy $n $1"
-    cp --parents $results $dst
+    cp -L --parents $results $dst
   fi
 }
 
