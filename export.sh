@@ -38,6 +38,7 @@ copy "requirements.txt" # pip: contains arguments for `pip install`
 copy "setup.py" # needed to know about setup of internal packages
 copy "pyproject.toml" # poetry, pdm, hatch, rye. uv
 copy "poetry.lock" # poetry
+copy ".venv" # virtual environments
 
 # Ruby
 copy "Gemfile" # gem
