@@ -9,7 +9,7 @@ curl -sSL https://raw.githubusercontent.com/bitflow/license-scan-export/refs/hea
 
 The script will copy files like `package.json` etc., preserving the folder structure, output the tree of copied files and generate a `bitflow-license-scan.zip` archive with all required files.
 
-Please check `extract.sh` for your used package managers and let us know if you are using something that is not covered.
+Please check `export.sh` for your used package managers and let us know if you are using something that is not covered.
 
 The script will not copy any source code. Therefore, we can't check if you copied individual copyrighted source files.
 Please delete any leftover files from build/bundle processes (e.g. `dist`). Ideally these files are git-ignored such that you can delete them using `git clean`.
