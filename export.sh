@@ -20,7 +20,7 @@ function copy() {
   else
     n=$(echo "$results" | wc -l)
     echo "Copy $n $1"
-    cp -L --parents $results $dst
+    cp -aL --parents $results $dst
   fi
 }
 
