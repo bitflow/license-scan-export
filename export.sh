@@ -13,14 +13,19 @@ trap 'echo "ERROR: $BASH_SOURCE:$LINENO $BASH_COMMAND" >&2' ERR
 dst=$(mktemp -d)
 trap 'rm -rf -- "$dst"' EXIT # clean up temp dir on premature exit
 
+# copy all files matching $1 to $dst, preserving the folder structure
+# (portable replacement for GNU-only `cp --parents`, also works for paths with spaces)
 function copy() {
-  results=$(find -L -iname "$1")
-  if [ -z "$results" ]; then
+  n=0
+  while IFS= read -r -d '' f; do
+    mkdir -p "$dst/$(dirname "$f")"
+    cp -RLp "$f" "$dst/$f"
+    n=$((n+1))
+  done < <(find -L . -iname "$1" -print0)
+  if [ $n -eq 0 ]; then
     echo "No $1"
   else
-    n=$(echo "$results" | wc -l)
     echo "Copy $n $1"
-    cp -aL --parents $results $dst
   fi
 }
 
@@ -90,5 +95,5 @@ echo
 zip="bitflow-license-scan.zip"
 echo "Generating $zip"
 rm -f $zip
-zip -rq $zip $dst
+(cd $dst && zip -rq "$OLDPWD/$zip" .) # zip from inside $dst to not include the temp dir path in the archive
 rm -rf $dst

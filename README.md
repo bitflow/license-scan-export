@@ -6,7 +6,7 @@ Run the Docker image with
 ```
 docker run -it --rm -v /path/to/code:/code ghcr.io/bitflow/license-scan-export
 ```
-or the script directly (assumes GNU coreutils, tree, and zip are installed):
+or the script directly (assumes bash, tree, and zip are installed):
 ```
 curl -sSL https://raw.githubusercontent.com/bitflow/license-scan-export/refs/heads/main/export.sh | bash
 ```
