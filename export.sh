@@ -70,10 +70,33 @@ copy ".venv" # virtual environments
 copy "Gemfile" # gem
 copy "Gemfile.lock"
 
-# Java
-copy "pom.xml" # mvn (Maven)
-copy "build.xml" # ant
-copy "*.jar" # individual jar files
+# Java (and other JVM languages: Kotlin, Scala, Groovy)
+# Maven
+copy "pom.xml"
+# Ant
+copy "build.xml"
+copy "ivy.xml" # Ivy: dependency management for Ant
+# Gradle
+# https://docs.gradle.org/current/userguide/dependency_management.html
+copy "*.gradle" .gradle # Groovy DSL: build.gradle, settings.gradle (subprojects), applied scripts like dependencies.gradle; skip the .gradle cache dir (its name also matches!)
+copy "*.gradle.kts" .gradle # Kotlin DSL: build.gradle.kts, settings.gradle.kts
+copy "gradle.properties" # versions are often defined as properties here
+copy "*.versions.toml" # version catalogs, default: gradle/libs.versions.toml
+copy "*gradle.lockfile" # dependency locking: gradle.lockfile, buildscript-gradle.lockfile, settings-gradle.lockfile (exact versions incl. transitive deps)
+copy "verification-metadata.xml" # dependency verification: all resolved artifacts with checksums
+copy "gradle-wrapper.properties" # Gradle version
+# checked in binary dependencies; skip build output (Maven: target, Gradle: build) and the Gradle cache
+copy "*.jar" target build .gradle # Java archive
+copy "*.war" target build .gradle # web application archive
+copy "*.ear" target build .gradle # enterprise application archive
+copy "*.aar" target build .gradle # Android archive
+
+# Scala
+copy "*.sbt" target # sbt: build.sbt, project/plugins.sbt; skip build output
+
+# Clojure
+copy "project.clj" # Leiningen
+copy "deps.edn" # Clojure CLI
 
 # .NET (common to C#, F#, Visual Basic, C++/CLI)
 # NuGet
