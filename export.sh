@@ -45,6 +45,8 @@ function files() {
 
 # copy all files matching $1 to $dst, preserving the folder structure; arguments as for `files`
 # (portable replacement for GNU-only `cp --parents`, also works for paths with spaces)
+# prints only the patterns with files (all with VERBOSE=1)
+patterns=0 patterns_found=0
 function copy() {
   local f n=0
   while IFS= read -r -d '' f; do
@@ -52,12 +54,17 @@ function copy() {
     cp -RLp "$f" "$dst/$f"
     n=$((n+1))
   done < <(files "$@")
+  patterns=$((patterns+1))
   if [ $n -eq 0 ]; then
-    echo "No $1"
+    [ "${VERBOSE:-0}" -eq 1 ] && echo "  -    $1"
   else
-    echo "Copy $n $1"
+    patterns_found=$((patterns_found+1))
+    printf '  %4d %s\n' "$n" "$1"
   fi
+  return 0
 }
+
+echo "Copying dependency files (manifests, lock files, checked-in binaries; no source code) from $(pwd):"
 
 # JS/TS
 copy "package.json" # any
@@ -280,8 +287,9 @@ if command -v git >/dev/null; then
       rm -f "$status" # not a git checkout, e.g. exported without .git
     fi
   done < <(files ".gitmodules")
-  echo "Saved $n git submodule status"
+  [ $n -gt 0 ] && printf '  %4d %s\n' "$n" "git submodule status (gitmodules-status.txt)"
 fi
+echo "Searched $patterns file patterns, found files for $patterns_found$([ "${VERBOSE:-0}" -eq 1 ] || echo " (VERBOSE=1 lists all patterns)")."
 
 # Meta data: when was the export done and on which branch/commit of each git repo (incl. submodules),
 # so that the scan can be reproduced and the results can be matched to a version of the code.
@@ -310,14 +318,20 @@ fi
   fi
 } > "$info"
 echo
-cat "$info"
+echo "Info file bitflow-license-scan-info.txt (git branch and commit of each repo, to match the export to a version of the code):"
+sed 's/^/  /' "$info"
 
 echo
-tree "$dst"
+echo "Contents of the export:"
+if command -v tree >/dev/null; then
+  (cd "$dst" && tree --noreport .) | sed 's/^/  /'
+else
+  (cd "$dst" && find . -type f | sort) | sed 's/^/  /'
+fi
 
 echo
 zip="bitflow-license-scan-$start_utc.zip"
-echo "Generating $zip"
+echo "Writing $zip"
 rm -f "$zip"
 (cd "$dst" && zip -rq "$OLDPWD/$zip" .) # zip from inside $dst to not include the temp dir path in the archive
 rm -rf "$dst"
