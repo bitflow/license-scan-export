@@ -53,22 +53,45 @@ function copy() {
 # JS/TS
 copy "package.json" # any
 copy "package-lock.json" # npm
+copy "npm-shrinkwrap.json" # npm: lock file that is published with a package
 copy "pnpm-lock.yaml" # pnpm
+copy "pnpm-workspace.yaml" # pnpm: catalogs (versions referenced by package.json as "catalog:")
 copy "yarn.lock" # yarn
-copy "deno.lock" # deno
-copy "bun.lockb" # bun
+copy "deno.json" # deno: imports
+copy "deno.jsonc"
+copy "deno.lock"
+copy "bun.lock" # bun: text lock file (default since bun 1.2)
+copy "bun.lockb" # bun: old binary lock file
 
 # Python
 # https://dev.to/adamghill/python-package-manager-comparison-1g98
-copy "requirements.txt" # pip: contains arguments for `pip install`
+copy "requirements*.txt" # pip: contains arguments for `pip install`, incl. variants like requirements-dev.txt
+copy "requirements/*.txt" # pip: e.g. requirements/base.txt
+copy "constraints*.txt" # pip: version constraints (pip install -c)
 copy "setup.py" # needed to know about setup of internal packages
-copy "pyproject.toml" # poetry, pdm, hatch, rye. uv
+copy "setup.cfg" # setuptools: install_requires is often here instead of in setup.py
+copy "pyproject.toml" # poetry, pdm, hatch, rye, uv
 copy "poetry.lock" # poetry
+copy "uv.lock" # uv
+copy "pdm.lock" # pdm
+copy "pylock.toml" # standard lock file (PEP 751)
+copy "pylock.*.toml"
+copy "Pipfile" # pipenv
+copy "Pipfile.lock"
+copy "environment.yml" # conda
+copy "environment.yaml"
+copy "pixi.toml" # pixi (conda packages)
+copy "pixi.lock"
+copy "*.whl" # checked in binary packages (wheels)
 copy ".venv" # virtual environments
 
 # Ruby
-copy "Gemfile" # gem
+copy "Gemfile" # bundler
 copy "Gemfile.lock"
+copy "gems.rb" # bundler: alternative names for Gemfile and Gemfile.lock
+copy "gems.locked"
+copy "*.gemspec" vendor # definition of internal gems; skip installed gems (vendor/bundle)
+copy "*.gem" vendor # checked in binary packages
 
 # Java (and other JVM languages: Kotlin, Scala, Groovy)
 # Maven
@@ -144,6 +167,10 @@ copy "subprojects/*.wrap" # Meson: wrap files with source URLs and versions of s
 # https://go.dev/ref/mod
 # https://go.dev/blog/migrating-to-go-modules see 'other supported formats'
 copy "go.mod" # Go module (default)
+copy "go.sum" # checksums of all module versions used, incl. transitive deps
+copy "go.work" # workspace: modules developed together
+copy "go.work.sum"
+copy "vendor/modules.txt" # vendored modules (`go mod vendor`) with versions
 copy "Godeps.json"
 copy "GLOCKFILE"
 copy "Gopkg.lock"
@@ -158,10 +185,17 @@ copy "Cargo.toml"
 copy "Cargo.lock"
 
 # PHP
-copy "composer.json"
+copy "composer.json" vendor # skip installed packages (covered by composer.lock)
 copy "composer.lock"
 
 # Perl
+copy "cpanfile" # Carton/cpanm
+copy "cpanfile.snapshot" # Carton: lock file
+copy "Makefile.PL" # ExtUtils::MakeMaker: PREREQ_PM
+copy "Build.PL" # Module::Build: requires
+copy "dist.ini" # Dist::Zilla
+copy "META.json" # CPAN distribution metadata incl. prereqs
+copy "META.yml"
 
 echo
 tree $dst
