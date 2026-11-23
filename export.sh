@@ -309,11 +309,11 @@ echo
 cat "$info"
 
 echo
-tree $dst
+tree "$dst"
 
 echo
 zip="bitflow-license-scan-$start_utc.zip"
 echo "Generating $zip"
-rm -f $zip
-(cd $dst && zip -rq "$OLDPWD/$zip" .) # zip from inside $dst to not include the temp dir path in the archive
-rm -rf $dst
+rm -f "$zip"
+(cd "$dst" && zip -rq "$OLDPWD/$zip" .) # zip from inside $dst to not include the temp dir path in the archive
+rm -rf "$dst"
