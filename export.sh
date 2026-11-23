@@ -123,6 +123,10 @@ copy "*.war" target build .gradle # web application archive
 copy "*.ear" target build .gradle # enterprise application archive
 copy "*.aar" target build .gradle # Android archive
 
+# Kotlin
+copy "*.main.kts" # scripts with inline deps: @file:DependsOn("group:artifact:version"), @file:Repository(...)
+copy "*.klib" build .gradle # Kotlin/Native and Multiplatform library archive; skip build output and the Gradle cache
+
 # Scala
 copy "*.sbt" target # sbt: build.sbt, project/plugins.sbt; skip build output
 
