@@ -13,15 +13,36 @@ trap 'echo "ERROR: $BASH_SOURCE:$LINENO $BASH_COMMAND" >&2' ERR
 dst=$(mktemp -d)
 trap 'rm -rf -- "$dst"' EXIT # clean up temp dir on premature exit
 
-# copy all files matching $1 to $dst, preserving the folder structure
+# directories that are always skipped (unless they are what we are looking for, see copy ".venv"):
+# .git: no dependency files, node_modules: installed packages (covered by the lock files), .venv: copied as a whole below
+skip_always=(.git node_modules .venv)
+
+# print all files matching $1 null-separated
+# $1 is matched against the file name, or against the end of the path if it contains a /, e.g. "requirements/*.txt"
+# optional further args are names of directories to skip, e.g. build output: files "*.dll" bin obj
+function files() {
+  local pattern=$1; shift
+  local prune=() d
+  for d in "${skip_always[@]}" "$@"; do
+    [ "$d" = "$pattern" ] && continue
+    prune+=(-type d -name "$d" -prune -o)
+  done
+  if [[ $pattern == */* ]]; then
+    find -L . "${prune[@]}" -ipath "*/$pattern" -print0
+  else
+    find -L . "${prune[@]}" -iname "$pattern" -print0
+  fi
+}
+
+# copy all files matching $1 to $dst, preserving the folder structure; arguments as for `files`
 # (portable replacement for GNU-only `cp --parents`, also works for paths with spaces)
 function copy() {
-  n=0
+  local f n=0
   while IFS= read -r -d '' f; do
     mkdir -p "$dst/$(dirname "$f")"
     cp -RLp "$f" "$dst/$f"
     n=$((n+1))
-  done < <(find -L . -iname "$1" -print0)
+  done < <(files "$@")
   if [ $n -eq 0 ]; then
     echo "No $1"
   else
