@@ -75,15 +75,46 @@ copy "pom.xml" # mvn (Maven)
 copy "build.xml" # ant
 copy "*.jar" # individual jar files
 
-# .NET
-#  XML files with e.g. <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-copy "packages.config" # old format for .NET Framework projects
-copy "*.csproj" # C#
-copy "*.fsproj" # F#
-copy "*.vbproj" # Visual Basic
-copy "*.vcxproj" # C++
-copy "nuget.config" # for local NuGet packages
+# .NET (common to C#, F#, Visual Basic, C++/CLI)
+# NuGet
+copy "packages.config" # old format for .NET Framework projects (instead of <PackageReference> in project files)
+copy "packages.lock.json" # NuGet lock file (RestorePackagesWithLockFile): exact versions incl. transitive deps
+copy "nuget.config" # package sources, e.g. for local/internal NuGet packages
 copy "*.nupkg" # local NuGet package
+copy "*.nuspec" # definition of internal NuGet packages (like setup.py for Python)
+# MSBuild: files imported by project files, may contain <PackageReference> or <PackageVersion>
+copy "*.props" # incl. Directory.Packages.props (Central Package Management: project files then have <PackageReference> without Version!) and Directory.Build.props (implicitly imported by all projects below it)
+copy "*.targets" # incl. Directory.Build.targets
+copy "global.json" # .NET SDK version and MSBuild project SDKs (msbuild-sdks, which are NuGet packages)
+copy "dotnet-tools.json" # local .NET tools (usually in .config/), e.g. dotnet-ef
+copy "*.sln" # solution: which projects belong together
+copy "*.slnx" # solution (new XML format)
+# Paket: alternative package manager (common for F#), replaces <PackageReference>
+copy "paket.dependencies"
+copy "paket.lock"
+# checked in binary references, e.g. <Reference Include="Foo"><HintPath>lib\Foo.dll</HintPath></Reference>
+copy "*.dll" bin obj packages # skip build output and restored packages (covered by *.nupkg)
+
+# C#
+#  XML project files with e.g. <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+copy "*.csproj"
+
+# F#
+copy "*.fsproj"
+
+# Visual Basic
+copy "*.vbproj"
+
+# C/C++
+copy "*.vcxproj" # MSBuild project, NuGet packages via packages.config (see .NET)
+copy "vcpkg.json" # vcpkg manifest
+copy "vcpkg-configuration.json" # vcpkg registries and baseline
+copy "conanfile.txt" # Conan
+copy "conanfile.py"
+copy "conan.lock"
+copy "CMakeLists.txt" build # CMake: find_package, FetchContent, CPM.cmake; skip build output
+copy "meson.build" build # Meson: dependency()
+copy "subprojects/*.wrap" # Meson: wrap files with source URLs and versions of subprojects
 
 # GO
 # https://go.dev/wiki/Modules#quick-start
