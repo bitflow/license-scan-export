@@ -12,6 +12,15 @@ trap 'echo "ERROR: $BASH_SOURCE:$LINENO $BASH_COMMAND" >&2' ERR
 # mkdir --parents $dst
 dst=$(mktemp -d)
 trap 'rm -rf -- "$dst"' EXIT # clean up temp dir on premature exit
+start_utc=$(date -u +%Y%m%dT%H%M%SZ) # for file names to tell runs apart (ISO 8601 basic format, sorts chronologically), same as in scan.sh
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+info="$dst/bitflow-license-scan-info.txt" # meta data about the export for reproducibility
+
+# read-only git command in directory $1; safe.directory: repos may be owned by another user, e.g. copied into a Docker container
+function g() {
+  local d=$1; shift
+  git -c safe.directory='*' -C "$d" "$@"
+}
 
 # directories that are always skipped (unless they are what we are looking for, see copy ".venv"):
 # .git: no dependency files, node_modules: installed packages (covered by the lock files), .venv: copied as a whole below
@@ -261,7 +270,7 @@ if command -v git >/dev/null; then
   while IFS= read -r -d '' f; do
     d=$(dirname "$f")
     status="$dst/$d/gitmodules-status.txt"
-    if git -C "$d" submodule status > "$status" 2>/dev/null; then
+    if g "$d" submodule status > "$status" 2>/dev/null; then
       n=$((n+1))
     else
       rm -f "$status" # not a git checkout, e.g. exported without .git
@@ -270,11 +279,40 @@ if command -v git >/dev/null; then
   echo "Saved $n git submodule status"
 fi
 
+# Meta data: when was the export done and on which branch/commit of each git repo (incl. submodules),
+# so that the scan can be reproduced and the results can be matched to a version of the code.
+{
+  echo "BitFlow license scan export"
+  echo "date: $start_utc"
+  echo "export.sh: $(g "$script_dir" describe --always --dirty 2>/dev/null || echo "unknown (not in a git repo)")"
+  if command -v git >/dev/null; then
+    while IFS= read -r -d '' f; do # .git is a directory, or a file for submodules and worktrees
+      d=$(dirname "$f")
+      commit=$(g "$d" rev-parse HEAD 2>/dev/null) || continue # not a valid repo or no commits yet
+      echo
+      echo "repo: $d"
+      echo "branch: $(g "$d" rev-parse --abbrev-ref HEAD)" # HEAD if detached (e.g. CI, submodule)
+      echo "commit: $commit"
+      echo "commit date: $(g "$d" log -1 --format=%cI)"
+      echo "describe: $(g "$d" describe --tags --always --dirty)" # nearest tag, -dirty if there are uncommitted changes
+      # counts only: if not 0, the exported files may differ from the commit
+      echo "modified files: $(g "$d" status --porcelain --untracked-files=no | wc -l | tr -d ' ')"
+      echo "untracked files: $(g "$d" status --porcelain --untracked-files=all | grep -c '^??' || true)" # not ignored by .gitignore
+      # remotes without credentials that may be part of the URL (https://user:token@host/...)
+      g "$d" remote -v | awk '$3 == "(fetch)" {print "remote " $1 ": " $2}' | sed -E 's#://[^/@]+@#://#'
+    done < <(files ".git")
+  else
+    echo "git not found: no info about git repos"
+  fi
+} > "$info"
+echo
+cat "$info"
+
 echo
 tree $dst
 
 echo
-zip="bitflow-license-scan.zip"
+zip="bitflow-license-scan-$start_utc.zip"
 echo "Generating $zip"
 rm -f $zip
 (cd $dst && zip -rq "$OLDPWD/$zip" .) # zip from inside $dst to not include the temp dir path in the archive
