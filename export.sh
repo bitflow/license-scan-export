@@ -197,6 +197,79 @@ copy "dist.ini" # Dist::Zilla
 copy "META.json" # CPAN distribution metadata incl. prereqs
 copy "META.yml"
 
+# Swift / Objective-C
+copy "Package.swift" .build # Swift Package Manager; skip build output (contains checkouts of dependencies)
+copy "Package.resolved" .build # SwiftPM lock file (also inside *.xcodeproj / *.xcworkspace)
+copy "Podfile" Pods # CocoaPods; skip installed pods
+copy "Podfile.lock" Pods
+copy "Cartfile" Carthage # Carthage; skip checkouts
+copy "Cartfile.resolved" Carthage
+
+# Dart / Flutter
+copy "pubspec.yaml" .dart_tool build
+copy "pubspec.lock" .dart_tool build
+
+# Elixir / Erlang
+copy "mix.exs" deps _build # Mix; skip fetched dependencies and build output
+copy "mix.lock" deps _build
+copy "rebar.config" _build # rebar3 (Erlang)
+copy "rebar.lock" _build
+
+# Haskell
+copy "*.cabal" dist-newstyle .stack-work # Cabal package; skip build output
+copy "cabal.project" dist-newstyle .stack-work
+copy "cabal.project.freeze" dist-newstyle .stack-work # Cabal lock file
+copy "stack.yaml" .stack-work # Stack
+copy "stack.yaml.lock" .stack-work
+
+# R
+copy "DESCRIPTION" renv # package metadata incl. Imports/Depends; skip installed packages
+copy "renv.lock" renv # renv lock file
+
+# Julia
+copy "Project.toml" # also used by other tools, but small
+copy "Manifest*.toml" # lock file, also versioned like Manifest-v1.11.toml
+copy "JuliaProject.toml"
+copy "JuliaManifest.toml"
+
+# Bazel
+copy "MODULE.bazel" # Bzlmod: bazel_dep
+copy "MODULE.bazel.lock"
+copy "WORKSPACE" # legacy: http_archive, git_repository
+copy "WORKSPACE.bazel"
+
+# Nix
+copy "flake.nix"
+copy "flake.lock"
+
+# Containers: base images and installed packages (e.g. apt-get install) are dependencies of what is shipped
+copy "Dockerfile"
+copy "*.Dockerfile"
+copy "Dockerfile.*"
+copy "Containerfile"
+copy "docker-compose*.y*ml" # Docker Compose: images
+copy "compose.y*ml"
+copy "compose.*.y*ml"
+
+# Git submodules: other repositories included in this one (any language)
+# .gitmodules only contains name, path and URL of each submodule; the pinned commit is stored in git's tree,
+# so we also save the output of `git submodule status` (commit hash and path, no code) as gitmodules-status.txt.
+# Manifests of checked out submodules are already copied above.
+copy ".gitmodules"
+if command -v git >/dev/null; then
+  n=0
+  while IFS= read -r -d '' f; do
+    d=$(dirname "$f")
+    status="$dst/$d/gitmodules-status.txt"
+    if git -C "$d" submodule status > "$status" 2>/dev/null; then
+      n=$((n+1))
+    else
+      rm -f "$status" # not a git checkout, e.g. exported without .git
+    fi
+  done < <(files ".gitmodules")
+  echo "Saved $n git submodule status"
+fi
+
 echo
 tree $dst
 
